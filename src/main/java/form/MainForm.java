@@ -5,6 +5,7 @@ import uskov.mail.client.Settings;
 import uskov.mail.client.SettingsReader;
 import uskov.mail.client.SmtpClient;
 
+import javax.mail.AuthenticationFailedException;
 import javax.mail.MessagingException;
 import javax.swing.*;
 import java.io.IOException;
@@ -40,11 +41,6 @@ public class MainForm {
             if(!settings.isValid()){
                 info("incorrect settings!");
             }
-            try {
-                SettingsReader.saveSettings(settings);
-            } catch (IOException e1) {
-
-            }
             String message = messageBodyTextField.getText();
             String theme = themeTextField.getText();
             String mailTo = mailTotextField.getText();
@@ -58,8 +54,12 @@ public class MainForm {
                     sendButton.setEnabled(false);
                     info("Busy");
                     SmtpClient.sendMessage(messageInfo);
+                    saveSettings(settings);
                     messageInfo.setStatus("GOOD");
                     info("Ready");
+                } catch (AuthenticationFailedException e1){
+                    messageInfo.setStatus("ERROR");
+                    info("Authentication failed");
                 } catch (MessagingException e1) {
                     messageInfo.setStatus("ERROR");
                     info("Error of sending message");
@@ -68,6 +68,14 @@ public class MainForm {
                 }
             }).start();
         });
+    }
+
+    private void saveSettings(Settings settings) {
+        try {
+            SettingsReader.saveSettings(settings);
+        } catch (IOException e1) {
+
+        }
     }
 
     private void info(String message) {
